@@ -1,0 +1,6 @@
+manacor:blue
+nadal:green
+ganar:red
+pekin:orange
+comunidad:blue
+españa:red
