@@ -1,0 +1,157 @@
+package SergioSantos;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
+
+class MySQLAPI {
+
+	/**
+	 * 
+	 * @param dni
+	 * @param nombre
+	 * @param edad
+	 */
+	public static void insertar(int dni, String nombre, int edad) {
+
+		MysqlDataSource msd = new MysqlDataSource();
+		msd.setServerName("localhost");
+		msd.setDatabaseName("personasbd");
+		msd.setUser("root");
+		msd.setPassword("admini");
+
+		Connection conexion = null;
+		
+		try {
+			conexion = msd.getConnection();
+			System.out.println("Conectado a la base de datos de MySQL");
+			PreparedStatement sentencia = null;
+			Statement sentencia2 = conexion.createStatement();
+
+			try{
+				ResultSet r = sentencia2.executeQuery("SELECT DNI FROM personas;");
+				
+				while(r.next()){
+					if(dni == r.getInt("DNI")){
+						throw new DNIException();
+					}
+				}
+				
+				try{
+					int caracteres = 0;
+					for(int i = 0; i<nombre.length(); i++){
+						caracteres++;
+					}
+					if(caracteres<1 || caracteres>50){
+						throw new NombreFormatoException();
+					}
+				}
+				catch(NombreFormatoException e){
+					System.out.println(e.toString());
+				}
+				
+				try{
+					if(edad<1 || edad>200){
+						throw new EdadFormatoException();
+					}
+				}
+				catch(EdadFormatoException e){
+					System.out.println(e.toString());
+				}
+				
+				try{
+					sentencia = conexion.prepareStatement(
+							"INSERT INTO personas(DNI, nombre, edad) VALUES("+dni+", '"+nombre+"', "+edad+")");
+					sentencia.execute();
+					sentencia.close();
+				}
+				catch(SQLException e){
+					System.out.println("ERROR! Comando no válido");
+				}
+			}
+			catch(DNIException e){
+				System.out.println(e.toString());
+			}
+		} 
+		catch (SQLException e) {
+			System.out.println("ERROR! Comando no válido");
+		}
+	}
+	
+	public static void borrar(int dni){
+		
+		MysqlDataSource msd = new MysqlDataSource();
+		msd.setServerName("localhost");
+		msd.setDatabaseName("personasbd");
+		msd.setUser("root");
+		msd.setPassword("admini");
+
+		Connection conexion = null;
+		
+		try {
+			conexion = msd.getConnection();
+			System.out.println("Conectado a la base de datos de MySQL");
+			PreparedStatement sentencia = null;
+			Statement sentencia2 = conexion.createStatement();
+			
+			try{
+				ResultSet r = sentencia2.executeQuery("SELECT DNI FROM personas;");
+				
+				while(r.next()){
+					if(dni == r.getInt("DNI")){
+						sentencia = conexion.prepareStatement(
+						"DELETE FROM personas WHERE DNI = "+dni+");");
+						sentencia.execute();
+						sentencia.close();
+					}
+				}
+				throw new DNIException2();
+			}
+			catch(DNIException2 e){
+				System.out.println(e.toString());
+			}
+		} 
+		catch (SQLException e) {
+			System.out.println("ERROR! Comando no válido");;
+		}
+	}
+}
+
+//-----------------------------------------------------------------------
+//------------------------ Clases de las Excepciones --------------------
+//-----------------------------------------------------------------------
+
+class DNIException extends Exception{
+	public String toString(){
+		return "ERROR! DNI duplicado.";
+	}
+}
+
+class DNIException2 extends Exception{
+	public String toString(){
+		return "ERROR! DNI inexistente.";
+	}
+}
+
+class NombreFormatoException extends Exception{
+	public String toString(){
+		return "ERROR! Formato de nombre incorecto. Se esperaba un nombre entre 1-50 caracteres.";
+	}
+}
+
+class EdadFormatoException extends Exception{
+	public String toString(){
+		return "ERROR! Formato de edad incorecto. Se esperaba una edad entre 0-200 años.";
+	}
+}
+
+public class PracticaPersistenciaObjetos{
+	
+	public static void main(String[] args) throws DNIException, NombreFormatoException, EdadFormatoException, SQLException {
+		
+		MySQLAPI.borrar(5);
+	}
+}
